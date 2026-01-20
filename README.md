@@ -144,6 +144,23 @@ curl -X 'POST' \
 
 ---
 
+## **💡 Troubleshooting**
+
+**Docker Issues**
+If you encounter errors in Docker or need to refresh the build:
+```bash
+docker-compose down
+docker-compose build --no-cache
+docker-compose up
+```
+
+---
+
 ## **🤝 Contributing**
 
 Feel free to open issues or submit pull requests if you have ideas for improvements, such as adding more cocktails to the dataset or improving the prompt engineering!
+
+---
+
+## **📸 Sample Screenshot**
+![Cocktail Advisor Chat](CocktailChat.png)
