@@ -1,89 +1,149 @@
-# 🍹 Cocktail Advisor Chat 🗨️  
-A **FastAPI-based chat application** that integrates a **Hugging Face LLM** and **FAISS vector database** to provide **cocktail recommendations** and **ingredient-based searches** using **Retrieval-Augmented Generation (RAG)**.
+# 🍹 Cocktail Advisor Chat 🗨️
+
+A smart **FastAPI-based** chat application that provides expert cocktail recommendations using **Retrieval-Augmented Generation (RAG)**. It combines **OpenAI's GPT-4** for intelligent responses with a **FAISS vector database** for precise ingredient-based lookups.
 
 ---
 
 ## **🚀 Features**
-- ✅ **Chatbot Interface** – Simple web-based UI for asking cocktail-related questions.  
-- ✅ **LLM-Powered Answers** – Uses **OpenAI GPT-4** for intelligent responses.  
-- ✅ **Vector Database (FAISS)** – Finds **similar cocktails** based on ingredients.  
-- ✅ **Memory Storage** – Stores **user’s favorite ingredients** for personalized recommendations.  
+
+- **🤖 AI-Powered Bartender**: Ask detailed questions like *"What's a good spicy cocktail made with tequila?"* and get contextual answers.
+- **🔍 Semantic Search**: Uses OpenAI embeddings to understand the *meaning* of your query, not just keyword matching.
+- **🍹 Similar Cocktail Suggestions**: Returns a list of real similar cocktails from the dataset alongside the AI answer.
+- **⚡ High Performance & Scalable**: Built with **Async FastAPI** and **Async OpenAI Clients** to handle concurrent requests efficiently without blocking, powered by **FAISS** for millisecond-level retrieval.
+- **🐳 Dockerized**: Ready to deploy with a single command.
+
+---
+
+## **🏗️ Architecture**
+
+The application enables a RAG workflow:
+1. **User Query**: You ask a question.
+2. **Embedding**: Your question is converted into a vector using `text-embedding-ada-002`.
+3. **Retrieval**: FAISS searches the `cocktail_dataset.json` for the most relevant cocktails based on ingredients and descriptions.
+4. **Augmentation**: The relevant cocktail data is injected into a prompt for GPT-4.
+5. **Generation**: GPT-4 answers your question using the retrieved knowledge.
 
 ---
 
 ## **🛠️ Tech Stack**
-- **Backend**: FastAPI  
-- **Frontend**: HTML, JavaScript  
+
+- **Backend framework**: [FastAPI](https://fastapi.tiangolo.com/)
 - **LLM**: OpenAI GPT-4
-- **Vector Database**: FAISS  
-- **Dockerized**: Runs with `docker-compose`  
+- **Vector DB**: [FAISS](https://github.com/facebookresearch/faiss)
+- **Embeddings**: OpenAI `text-embedding-ada-002`
+- **Containerization**: Docker & Docker Compose
+
+---
+
+## **📋 Prerequisites**
+
+Before running the application, ensure you have:
+1. **OpenAI API Key**: Sign up at [platform.openai.com](https://platform.openai.com).
+2. **Docker Desktop** (recommended) OR **Python 3.10+**.
 
 ---
 
 ## **📦 Installation & Setup**
 
-### **1️⃣ Clone the Repository**
+### **Option 1: Run with Docker (Recommended)**
 
+1. **Clone the repository:**
+   ```bash
+   git clone <repository_url>
+   cd cocktail-advisor-chat
+   ```
 
+2. **Configure Environment Variables:**
+   Create a `.env` file in the root directory:
+   ```bash
+   # Windows (PowerShell)
+   New-Item .env -Value "OPENAI_API_KEY=sk-your-api-key-here"
+
+   # Mac/Linux
+   echo "OPENAI_API_KEY=sk-your-api-key-here" > .env
+   ```
+
+3. **Build and Run:**
+   ```bash
+   docker-compose up --build
+   ```
+
+4. **Access the App:**
+   Open your browser and navigate to: [http://localhost:8000](http://localhost:8000)
+
+---
+
+### **Option 2: Run Locally (Python)**
+
+If you prefer running without Docker:
+
+1. **Create a virtual environment:**
+   ```bash
+   python -m venv venv
+   # Windows
+   .\venv\Scripts\activate
+   # Mac/Linux
+   source venv/bin/activate
+   ```
+
+2. **Install Dependencies:**
+   ```bash
+   pip install -r requirements.txt
+   ```
+
+3. **Set Environment Variable:**
+   ```bash
+   # Windows (CMD)
+   set OPENAI_API_KEY=sk-your-api-key-here
+   # Windows (PowerShell)
+   $env:OPENAI_API_KEY="sk-your-api-key-here"
+   # Mac/Linux
+   export OPENAI_API_KEY=sk-your-api-key-here
+   ```
+
+4. **Run the Server:**
+   ```bash
+   uvicorn app.main:app --reload
+   ```
+
+---
+
+## **⚠️ Important Note on Startup**
+
+**Indexing Behavior:**
+On the very first run (or if `faiss_index.bin` is deleted), the application will **regenerate the vector index**.
+- This process converts all cocktails in `cocktail_dataset.json` into embeddings using OpenAI's API.
+- **This will consume OpenAI API credits.** based on the dataset size (~200+ items).
+- Subsequent restarts will load the cached `faiss_index.bin` instantly.
+
+---
+
+## **📡 API Usage**
+
+You can interact with the API directly using tools like `curl` or Postman.
+
+### **Chat Endpoint**
+Get an AI answer based on cocktail knowledge.
+- **URL**: `POST /api/chat`
+- **Body**:
+  ```json
+  {
+    "question": "What is a good cocktail with gin and lemon?"
+  }
+  ```
+
+**Example Curl:**
 ```bash
-1 git clone https://github.com/your-username/cocktail-advisor-chat.git
-cd cocktail-advisor-chat
+curl -X 'POST' \
+  'http://localhost:8000/api/chat' \
+  -H 'Content-Type: application/json' \
+  -d '{
+  "question": "I want something sweet with rum."
+}'
+```
 
+---
 
-2 create .env file and configure it with:
-OPENAI_API_KEY=your-api-key-here
+## **🤝 Contributing**
 
-
-3 Build & Start the Application
-docker-compose up --build
-
-✅ Wait until you see:
-INFO:     Application startup complete.
-
-**Example: 
-INFO:     Will watch for changes in these directories: ['/app']
-INFO:     Uvicorn running on http://0.0.0.0:8000 (Press CTRL+C to quit)
-INFO:     Started reloader process [1] using StatReload
-INFO:     Started server process [8]
-INFO:     Waiting for application startup.
-INFO:     Application startup complete.
-
-
-
-
-🛠️ API Usage
-
-**1️⃣ Test Chatbot with **curl
-
-curl -X 'POST' 'http://localhost:8000/api/chat' \
-     -H 'Content-Type: application/json' \
-     -d '{"question": "What are the 5 cocktails containing lemon?"}'
-
-2️⃣ Test with UI (Web Page)
-
-Open your browser and go to:👉 http://localhost:8000
-
-
-
-
-💡 Troubleshooting
-
-1️⃣ OpenAI API Not Working?
-
-Check your API key in .env file.
-
-Make sure you have enough credits in OpenAI: 👉 https://platform.openai.com/account/usage
-
-2️⃣ Errors in Docker?
-
-Try rebuilding everything:
-
-docker-compose down
-docker-compose build --no-cache
-docker-compose up
-
-
-
-Sample usage:
-
-![Cocktail Advisor Chat](CocktailChat.png)
+Feel free to open issues or submit pull requests if you have ideas for improvements, such as adding more cocktails to the dataset or improving the prompt engineering!

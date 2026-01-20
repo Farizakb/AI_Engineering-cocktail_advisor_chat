@@ -9,14 +9,24 @@ OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 
 # Set API key globally
 openai.api_key = OPENAI_API_KEY
+# Async Client for search queries
+async_client = openai.AsyncOpenAI(api_key=OPENAI_API_KEY)
 
 # Path to FAISS index
 FAISS_INDEX_PATH = "faiss_index.bin"
 COCKTAILS_JSON = "cocktail_dataset.json"
 
 def embed_text(text: str) -> np.array:
-    """Converts text into an embedding using OpenAI's latest API."""
+    """Converts text into an embedding (Synchronous for initialization)."""
     response = openai.embeddings.create(
+        model="text-embedding-ada-002",
+        input=[text]
+    )
+    return np.array(response.data[0].embedding, dtype=np.float32)
+
+async def embed_text_async(text: str) -> np.array:
+    """Converts text into an embedding (Async for search)."""
+    response = await async_client.embeddings.create(
         model="text-embedding-ada-002",
         input=[text]
     )
@@ -42,8 +52,8 @@ class FaissIndex:
             # Save FAISS index
             faiss.write_index(self.index, FAISS_INDEX_PATH)
 
-    def search(self, query: str, k: int = 5):
-        """Search FAISS index for similar cocktails."""
+    async def search(self, query: str, k: int = 5):
+        """Search FAISS index for similar cocktails (Async)."""
         if not os.path.exists(FAISS_INDEX_PATH):
             print("FAISS index not found. Please rebuild it.")
             return []
@@ -52,7 +62,8 @@ class FaissIndex:
         if self.index is None:
             self.index = faiss.read_index(FAISS_INDEX_PATH)
 
-        query_embedding = np.array([embed_text(query)], dtype=np.float32)
+        # Generate embedding asynchronously
+        query_embedding = np.array([await embed_text_async(query)], dtype=np.float32)
         distances, indices = self.index.search(query_embedding, k)
         
         results = []

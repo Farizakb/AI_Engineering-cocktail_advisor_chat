@@ -12,14 +12,14 @@ class CocktailQuery(BaseModel):
 @router.post("/chat")
 async def chat_with_cocktail_advisor(request: CocktailQuery):
     # Step 1: Retrieve relevant cocktails from FAISS
-    relevant_cocktails = faiss_index.search(request.question, k=5)
+    relevant_cocktails = await faiss_index.search(request.question, k=5)
 
     # Step 2: Build a context prompt for OpenAI
     context = "\n".join([f"- {c['name']} ({', '.join(c['ingredients'])})" for c in relevant_cocktails])
     prompt = f"Using the following cocktail knowledge:\n{context}\n\nAnswer the question: {request.question}"
 
     # Step 3: Get a response from OpenAI
-    answer = ask_gpt(prompt)
+    answer = await ask_gpt(prompt)
 
     return {"reply": answer, "relevant_cocktails": relevant_cocktails}
 
@@ -29,5 +29,5 @@ class CocktailSearchRequest(BaseModel):
 
 @router.post("/search")
 async def search_cocktail(request: CocktailSearchRequest):
-    results = faiss_index.search(request.query, k=5)
+    results = await faiss_index.search(request.query, k=5)
     return {"cocktails": results}
